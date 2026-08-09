@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>St Cyprian · Seminary Portal</title>
+
+    <!-- ===== FIREBASE (compat v9) ===== -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- ===== FONTS & ICONS ===== -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+    <!-- ===== LINK EXTERNAL CSS FILE ===== -->
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+    <canvas id="particles-canvas"></canvas>
+
+    <div class="dev-dots" id="devDots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    <div class="dev-panel" id="devPanel">
+        <h4 style="margin-bottom:10px;"><i class="fas fa-code"></i> Dev Console</h4>
+        <div class="dev-row"><span>Status:</span><span style="color:#34d399">● Connected</span></div>
+        <div class="dev-row"><span>UID:</span><span id="devUid">—</span></div>
+        <div class="dev-actions">
+            <button id="devRefresh"><i class="fas fa-sync"></i> Refresh App</button>
+            <button id="devClearChat"><i class="fas fa-trash"></i> Clear Chat</button>
+        </div>
+    </div>
+
+    <!-- LOGIN / SIGNUP / RESET -->
+    <div id="login-screen">
+        <div class="login-container">
+            <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
+            <h1>St Cyprian</h1>
+            <div class="subtitle">Seminary Portal</div>
+
+            <!-- Login Form -->
+            <form id="loginForm">
+                <div class="input-group"><i class="fas fa-envelope"></i><input type="email" id="loginEmail" placeholder="Email" required /></div>
+                <div class="input-group"><i class="fas fa-lock"></i><input type="password" id="loginPassword" placeholder="Password" required /></div>
+                <button type="submit" class="btn-primary" id="loginBtn">Sign In</button>
+                <div class="error-msg" id="loginError"></div>
+            </form>
+
+            <!-- Signup Form -->
+            <form id="signupForm" style="display:none;">
+                <div class="input-group"><i class="fas fa-user"></i><input type="text" id="signupName" placeholder="Full Name" required /></div>
+                <div class="input-group"><i class="fas fa-envelope"></i><input type="email" id="signupEmail" placeholder="Email" required /></div>
+                <div class="input-group"><i class="fas fa-lock"></i><input type="password" id="signupPassword" placeholder="Password (6+ chars)" required /></div>
+                <button type="submit" class="btn-primary" id="signupBtn">Create Account</button>
+                <div class="error-msg" id="signupError"></div>
+            </form>
+
+            <!-- Reset Password Form -->
+            <form id="resetForm" style="display:none;">
+                <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom: 12px;">Enter your email to receive a password reset link.</p>
+                <div class="input-group"><i class="fas fa-envelope"></i><input type="email" id="resetEmail" placeholder="Email" required /></div>
+                <button type="submit" class="btn-primary" id="resetBtn">Send Reset Link</button>
+                <div class="error-msg" id="resetError"></div>
+                <div class="success-msg" id="resetSuccess"></div>
+            </form>
+
+            <div class="forgot-link" id="forgotLinkBox"><a id="forgotBtn">Forgot Password?</a></div>
+            <div class="toggle-auth"><span id="toggleText">Don't have an account?</span> <a id="toggleAuthBtn">Create one</a></div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard">
+        <div class="topbar">
+            <div class="brand"><i class="fas fa-cross"></i> St Cyprian</div>
+            <div class="right-actions">
+                <div class="user-badge">
+                    <div class="avatar" id="userAvatar">U</div>
+                    <span id="userNameDisplay">—</span>
+                    <span class="rank-badge" id="userRankBadge">Novice</span>
+                </div>
+                <button class="logout-btn" id="logoutBtn">Leave</button>
+            </div>
+        </div>
+
+        <div class="dash-grid">
+            <!-- Daily Quote / Motivation -->
+            <div class="dash-card speech-card">
+                <button class="refresh-speech" id="newSpeechBtn" title="Get new inspiration"><i class="fas fa-sync-alt"></i></button>
+                <div class="speech-text" id="speechText">Carry each other's burdens, and fulfill the law of Christ.</div>
+                <div class="speech-author" id="speechAuthor">Galatians 6:2</div>
+            </div>
+
+            <!-- Chapel Chat with Image support -->
+            <div class="dash-card">
+                <h3><i class="fas fa-comments"></i> Chapel Chat</h3>
+                <div class="chat-messages" id="chatMessages"><div class="empty-state">No messages yet.</div></div>
+                <div class="chat-input-row">
+                    <input type="text" id="chatInput" placeholder="Type a message or image URL..." maxlength="280" />
+                    <button id="chatSendBtn"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+
+            <!-- Learning Hall -->
+            <div class="dash-card">
+                <h3><i class="fas fa-book-open"></i> Learning Hall</h3>
+                <div class="edu-grid" id="eduGrid"></div>
+            </div>
+
+            <!-- Math Corner (Text & Image Questions) -->
+            <div class="dash-card">
+                <h3><i class="fas fa-square-root-variable"></i> Math Challenge</h3>
+                <div class="math-box">
+                    <div class="math-q" id="mathQuestion">Solve for x: 2x + 6 = 14</div>
+                    <div id="mathImgContainer"></div>
+                    <div class="chat-input-row" style="margin-top:8px;">
+                        <input type="text" id="mathAnswerInput" placeholder="Your answer..." />
+                        <button id="mathSubmitBtn">Submit</button>
+                    </div>
+                    <div id="mathFeedback" style="font-size:0.85rem; margin-top:6px;"></div>
+                </div>
+            </div>
+
+            <!-- Multiplayer Penalty Shootout Mini-Game -->
+            <div class="dash-card">
+                <h3><i class="fas fa-futbol"></i> Penalty Shootout (PC/Mobile)</h3>
+                <div class="game-canvas-container">
+                    <canvas id="footballCanvas"></canvas>
+                </div>
+                <div class="game-controls">
+                    <button class="game-btn" id="shootLeftBtn">👈 Left</button>
+                    <button class="game-btn" id="shootCenterBtn">🎯 Center</button>
+                    <button class="game-btn" id="shootRightBtn">👉 Right</button>
+                </div>
+                <div id="gameScore" style="text-align:center; font-size:0.85rem; margin-top:8px;">Score: 0 | Keeper Ready</div>
+            </div>
+
+            <!-- Leadership Board -->
+            <div class="dash-card" style="grid-column: 1 / -1;">
+                <h3><i class="fas fa-trophy"></i> Leadership Board</h3>
+                <div id="leaderList" style="margin-top:10px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== LINK EXTERNAL JAVASCRIPT FILE ===== -->
+    <script src="script.js"></script>
+</body>
+</html>
